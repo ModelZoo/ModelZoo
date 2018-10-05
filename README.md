@@ -36,8 +36,27 @@ class BostonHousingModel(BaseModel):
 Then define a trainer like this, named `train.py`:
 
 ```
+from model import BostonHousingModel
+from model_zoo.trainer import BaseTrainer
+from tensorflow.python.keras.datasets import boston_housing
+from sklearn.preprocessing import StandardScaler
 
+class Trainer(BaseTrainer):
 
+    def __init__(self):
+        BaseTrainer.__init__(self)
+        self.model_class = BostonHousingModel
+
+    def prepare_data(self):
+        (x_train, y_train), (x_eval, y_eval) = boston_housing.load_data()
+        ss = StandardScaler()
+        ss.fit(x_train)
+        x_train, x_eval = ss.transform(x_train), ss.transform(x_eval)
+        train_data, eval_data = (x_train, y_train), (x_eval, y_eval)
+        return train_data, eval_data
+
+if __name__ == '__main__':
+    Trainer().run()
 ```
 
 Now, we've finished this model.
@@ -81,3 +100,78 @@ Epoch 42/100
 Epoch 00042: saving model to checkpoints/model.ckpt
 ```
 
+It runs only 42 epochs and stopped early, because there are no more good evaluation results for 20 epochs.
+
+When finished, we can find two folders generated named `checkpoints` and `events`.
+
+Go to `events` and run TensorBoard:
+
+```
+cd events
+tensorboard --logdir=.
+```
+
+TensorBoard like this:
+
+![](https://ws4.sinaimg.cn/large/006tNbRwgy1fvxrcajse2j31kw0hkgnf.jpg)
+
+There are training batch loss, epoch loss, eval loss.
+
+And also we can find checkpoints in `checkpoints` dir.
+
+It saved the best model named `model.ckpt` according to eval score, and it also saved checkpoints every 2 epochs.
+
+Next we can predict using existing checkpoints, define `infer.py` like this:
+
+```
+from model import BostonHousingModel
+from model_zoo.inferer import BaseInferer
+import tensorflow as tf
+from tensorflow.python.keras.datasets import boston_housing
+from sklearn.preprocessing import StandardScaler
+
+tf.flags.DEFINE_string('checkpoint_name', 'model.ckpt-38', help='Model name')
+
+class Inferer(BaseInferer):
+    def __init__(self):
+        BaseInferer.__init__(self)
+        self.model_class = BostonHousingModel
+
+    def prepare_data(self):
+        (x_train, y_train), (x_test, y_test) = boston_housing.load_data()
+        ss = StandardScaler()
+        ss.fit(x_train)
+        x_test = ss.transform(x_test)
+        return x_test
+
+
+if __name__ == '__main__':
+    result = Inferer().run()
+    print(result)
+```
+
+Now we've restored the specified model `model.ckpt-38` and prepared test data, outputs like this:
+
+```
+[[ 9.637125 ]
+ [21.368305 ]
+ [20.898445 ]
+ [33.832504 ]
+ [25.756516 ]
+ [21.264557 ]
+ [29.069794 ]
+ [24.968184 ]
+ ...
+ [36.027283 ]
+ [39.06852  ]
+ [25.728745 ]
+ [41.62165  ]
+ [34.340042 ]
+ [24.821484 ]]
+```
+
+OK, we've finished restoring and predicting. Just so quickly.
+
+## License
+
+MIT

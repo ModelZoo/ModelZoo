@@ -1,9 +1,10 @@
 from model import BostonHousingModel
 from model_zoo.inferer import BaseInferer
 import tensorflow as tf
+from tensorflow.python.keras.datasets import boston_housing
+from sklearn.preprocessing import StandardScaler
 
-tf.flags.DEFINE_string('checkpoint_name', 'model.ckpt-4', help='Model name')
-
+tf.flags.DEFINE_string('checkpoint_name', 'model.ckpt-38', help='Model name')
 
 class Inferer(BaseInferer):
     def __init__(self):
@@ -11,8 +12,6 @@ class Inferer(BaseInferer):
         self.model_class = BostonHousingModel
     
     def prepare_data(self):
-        from tensorflow.python.keras.datasets import boston_housing
-        from sklearn.preprocessing import StandardScaler
         (x_train, y_train), (x_test, y_test) = boston_housing.load_data()
         ss = StandardScaler()
         ss.fit(x_train)
