@@ -69,7 +69,7 @@ python3 train.py
 
 Outputs like this:
 
-```python
+```
 Epoch 1/100
  1/13 [=>............................] - ETA: 0s - loss: 816.1798
 13/13 [==============================] - 0s 4ms/step - loss: 457.9925 - val_loss: 343.2489
