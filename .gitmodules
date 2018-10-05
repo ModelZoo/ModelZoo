@@ -1,0 +1,6 @@
+[submodule "models/linear_regression"]
+	path = models/linear_regression
+	url = https://github.com/ModelZoo/LinearRegression.git
+[submodule "models/image_classification"]
+	path = models/image_classification
+	url = https://github.com/ModelZoo/ImageClassification.git
