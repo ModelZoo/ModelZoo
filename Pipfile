@@ -1,0 +1,35 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+absl-py = "==0.5.0"
+astor = "==0.7.1"
+cycler = "==0.10.0"
+gast = "==0.2.0"
+grpcio = "==1.15.0"
+"h5py" = "==2.8.0"
+keras-applications = "==1.0.6"
+keras-preprocessing = "==1.0.5"
+kiwisolver = "==1.0.1"
+markdown = "==3.0.1"
+matplotlib = "==3.0.0"
+numpy = ">=1.15.2"
+pandas = "*"
+protobuf = "==3.6.1"
+pyparsing = "==2.2.2"
+python-dateutil = "==2.7.3"
+scikit-learn = "==0.20.0"
+scipy = ">=1.1.0"
+six = "==1.11.0"
+sklearn = "*"
+tensorboard = ">=1.11.0"
+tensorflow = ">=1.11.0"
+termcolor = "==1.1.0"
+werkzeug = "==0.14.1"
+
+[dev-packages]
+
+[requires]
+python_version = "3.6"

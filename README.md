@@ -18,7 +18,7 @@ Here we use boston_housing dataset as example.
 
 Define a linear model like this, named `model.py`:
 
-```
+```python
 from model_zoo.model import BaseModel
 import tensorflow as tf
 
@@ -35,7 +35,7 @@ class BostonHousingModel(BaseModel):
 
 Then define a trainer like this, named `train.py`:
 
-```
+```python
 from model import BostonHousingModel
 from model_zoo.trainer import BaseTrainer
 from tensorflow.python.keras.datasets import boston_housing
@@ -69,8 +69,7 @@ python3 train.py
 
 Outputs like this:
 
-```
-
+```python
 Epoch 1/100
  1/13 [=>............................] - ETA: 0s - loss: 816.1798
 13/13 [==============================] - 0s 4ms/step - loss: 457.9925 - val_loss: 343.2489
@@ -123,7 +122,7 @@ It saved the best model named `model.ckpt` according to eval score, and it also 
 
 Next we can predict using existing checkpoints, define `infer.py` like this:
 
-```
+```python
 from model import BostonHousingModel
 from model_zoo.inferer import BaseInferer
 import tensorflow as tf
@@ -152,7 +151,7 @@ if __name__ == '__main__':
 
 Now we've restored the specified model `model.ckpt-38` and prepared test data, outputs like this:
 
-```
+```python
 [[ 9.637125 ]
  [21.368305 ]
  [20.898445 ]
