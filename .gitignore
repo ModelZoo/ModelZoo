@@ -14,6 +14,8 @@ debug.log
 # Distribution / packaging
 .Python
 build/
+examples/checkpoints/
+examples/events/
 develop-eggs/
 dist/
 downloads/
@@ -45,6 +47,7 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+
 nosetests.xml
 coverage.xml
 *.cover
