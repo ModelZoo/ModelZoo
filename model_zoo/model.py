@@ -26,6 +26,11 @@ class BaseModel(tf.keras.Model):
         self.epochs = config['epochs']
     
     def set_inputs(self, inputs):
+        """
+        set inputs and output shape according to inputs
+        :param inputs: inputs data or data piece
+        :return:
+        """
         if isinstance(inputs, (list, tuple)):
             if tensor_util.is_tensor(inputs[0]):
                 dummy_output_values = self.call(
@@ -83,7 +88,12 @@ class BaseModel(tf.keras.Model):
         :return: fit result
         """
         x, y = train_data
+        print("Start set inputs", x.shape)
         self.set_inputs(x)
+        print('Set Inputs', self.inputs)
+        print('Set Outpus', self.outputs)
+        print('Set Inputs Names', self.input_names)
+        print('Set Output Names', self.output_names)
         return self.fit(x=x,
                         y=y,
                         epochs=self.epochs,
