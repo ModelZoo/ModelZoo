@@ -88,12 +88,7 @@ class BaseModel(tf.keras.Model):
         :return: fit result
         """
         x, y = train_data
-        print("Start set inputs", x.shape)
         self.set_inputs(x)
-        print('Set Inputs', self.inputs)
-        print('Set Outpus', self.outputs)
-        print('Set Inputs Names', self.input_names)
-        print('Set Output Names', self.output_names)
         return self.fit(x=x,
                         y=y,
                         epochs=self.epochs,

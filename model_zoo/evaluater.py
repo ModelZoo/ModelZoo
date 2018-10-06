@@ -40,7 +40,7 @@ class BaseEvaluater(object):
         model = self.model_class(load_config(self.flags))
         model.init()
         # init variables
-        model.call(tf.keras.Input(shape=(get_shape(x_eval))), training=False)
+        model.set_inputs(x_eval)
         # restore model
         load_model(model, self.flags.checkpoint_dir, self.flags.checkpoint_name)
         # evaluate
