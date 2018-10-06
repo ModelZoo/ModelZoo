@@ -1,7 +1,12 @@
 import tensorflow as tf
+import model_zoo.callbacks as callbacks
+from tensorflow.python.framework import tensor_util
+from tensorflow.python.keras.engine import training_utils
+from tensorflow.python.keras.engine import base_layer
+from tensorflow.python.framework import ops
+from tensorflow.python.keras import backend as K
 
 tfe = tf.contrib.eager
-import model_zoo.callbacks as callbacks
 
 
 class BaseModel(tf.keras.Model):
@@ -9,6 +14,7 @@ class BaseModel(tf.keras.Model):
     Base Keras Model, you can inherit this Model and
     override '__init__()', 'call()', 'init()', 'callback()' methods
     """
+    
     def __init__(self, config):
         """
         init config, batch_size, epochs
@@ -18,6 +24,39 @@ class BaseModel(tf.keras.Model):
         self.config = config
         self.batch_size = config['batch_size']
         self.epochs = config['epochs']
+    
+    def set_inputs(self, inputs):
+        if isinstance(inputs, (list, tuple)):
+            if tensor_util.is_tensor(inputs[0]):
+                dummy_output_values = self.call(
+                    training_utils.cast_if_floating_dtype(inputs[:1]))
+            else:
+                dummy_output_values = self.call(
+                    [ops.convert_to_tensor(v, dtype=K.floatx()) for v in inputs[:1]])
+            dummy_input_values = list(inputs[:1])
+        else:
+            if tensor_util.is_tensor(inputs):
+                dummy_output_values = self.call(
+                    training_utils.cast_if_floating_dtype(inputs[:1]))
+            else:
+                dummy_output_values = self.call(
+                    ops.convert_to_tensor(inputs[:1], dtype=K.floatx()))
+            dummy_input_values = [inputs[:1]]
+        if isinstance(dummy_output_values, (list, tuple)):
+            dummy_output_values = list(dummy_output_values)
+        else:
+            dummy_output_values = [dummy_output_values]
+        self.outputs = [
+            base_layer.DeferredTensor(shape=(None for _ in v.shape),
+                                      dtype=v.dtype) for v in dummy_output_values]
+        self.inputs = [
+            base_layer.DeferredTensor(shape=(None for _ in v.shape),
+                                      dtype=v.dtype) for v in dummy_input_values]
+        self.input_names = [
+            'input_%d' % (i + 1) for i in range(len(dummy_input_values))]
+        self.output_names = [
+            'output_%d' % (i + 1) for i in range(len(dummy_output_values))]
+        self.built = True
     
     def call(self, inputs, training=None, mask=None):
         """
@@ -44,6 +83,7 @@ class BaseModel(tf.keras.Model):
         :return: fit result
         """
         x, y = train_data
+        self.set_inputs(x)
         return self.fit(x=x,
                         y=y,
                         epochs=self.epochs,

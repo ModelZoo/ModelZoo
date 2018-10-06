@@ -38,16 +38,16 @@ def load_model(model, checkpoint_dir, checkpoint_name):
         print('No model to restore')
 
 
-def get_shape(test_data):
+def get_shape(data):
     """
     get shape of data except batch_size
-    :param test_data:
+    :param data:
     :return:
     """
-    if isinstance(test_data, np.ndarray) or isinstance(test_data, tf.Tensor):
-        shape = test_data.shape
+    if isinstance(data, np.ndarray) or isinstance(data, tf.Tensor):
+        shape = data.shape
         return shape[1:]
     else:
-        data = np.asarray(test_data)
+        data = np.asarray(data)
         shape = data.shape
         return shape[1:]

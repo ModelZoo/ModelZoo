@@ -38,7 +38,7 @@ class BaseInferer():
         model = self.model_class(load_config(self.flags))
         model.init()
         # init variables
-        model.call(tf.keras.Input(shape=(get_shape(test_data=self.test_data))), training=False)
+        model.call(tf.keras.Input(shape=(get_shape(self.test_data))), training=False)
         # restore model if exists
         load_model(model, self.flags.checkpoint_dir, self.flags.checkpoint_name)
         # infer
