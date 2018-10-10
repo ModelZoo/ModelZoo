@@ -1,6 +1,7 @@
 from model_zoo.model import BaseModel
 import tensorflow as tf
 
+
 class BostonHousingModel(BaseModel):
     def __init__(self, config):
         super(BostonHousingModel, self).__init__(config)

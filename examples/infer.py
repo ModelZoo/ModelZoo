@@ -1,21 +1,16 @@
-from model import BostonHousingModel
 from model_zoo.inferer import BaseInferer
+from model_zoo.preprocess import standardize
 import tensorflow as tf
-from tensorflow.python.keras.datasets import boston_housing
-from sklearn.preprocessing import StandardScaler
 
-tf.flags.DEFINE_string('checkpoint_name', 'model.ckpt-38', help='Model name')
+tf.flags.DEFINE_string('checkpoint_name', 'model.ckpt-20', help='Model name')
+
 
 class Inferer(BaseInferer):
-    def __init__(self):
-        BaseInferer.__init__(self)
-        self.model_class = BostonHousingModel
     
     def prepare_data(self):
+        from tensorflow.python.keras.datasets import boston_housing
         (x_train, y_train), (x_test, y_test) = boston_housing.load_data()
-        ss = StandardScaler()
-        ss.fit(x_train)
-        x_test = ss.transform(x_test)
+        _, x_test = standardize(x_train, x_test)
         return x_test
 
 
