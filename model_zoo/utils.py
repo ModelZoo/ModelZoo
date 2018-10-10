@@ -66,3 +66,6 @@ def get_shape(data):
         data = np.asarray(data)
         shape = data.shape
         return shape[1:]
+    
+    
+
