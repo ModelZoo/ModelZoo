@@ -161,6 +161,11 @@ Now we've restored the specified model `model.ckpt-38` and prepared test data, o
 
 OK, we've finished restoring and predicting. Just so quickly.
 
+## Implemented Models
+
+Just see [models](./models), welcome to contribute your model to us.
+
 ## License
 
 MIT
+

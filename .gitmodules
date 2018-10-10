@@ -4,3 +4,6 @@
 [submodule "models/image_classification"]
 	path = models/image_classification
 	url = https://github.com/ModelZoo/ImageClassification.git
+[submodule "models/emotion_recognition"]
+	path = models/emotion_recognition
+	url = https://github.com/ModelZoo/EmotionRecognition.git
