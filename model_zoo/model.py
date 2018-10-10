@@ -115,14 +115,17 @@ class BaseModel(tf.keras.Model):
         """
         cbs = []
         cbs.append(tf.keras.callbacks.BaseLogger())
-        cbs.append(tf.keras.callbacks.EarlyStopping(patience=self.config.get('early_stop_patience', 50)))
-        cbs.append(tf.keras.callbacks.TensorBoard(log_dir=self.config.get('events_dir', 'events')))
-        cbs.append(callbacks.ModelCheckpoint(
-            checkpoint_dir=self.config.get('checkpoint_dir', 'checkpoints'),
-            checkpoint_name=self.config.get('checkpoint_name', 'model'),
-            checkpoint_restore=self.config.get('checkpoint_restore', True),
-            checkpoint_save_freq=self.config.get('checkpoint_save_freq', 2),
-            checkpoint_save_best_only=self.config.get('checkpoint_save_best_only', False)))
+        if self.config.get('early_stop_enable'):
+            cbs.append(tf.keras.callbacks.EarlyStopping(patience=self.config.get('early_stop_patience', 50)))
+        if self.config.get('tensor_board_enable'):
+            cbs.append(tf.keras.callbacks.TensorBoard(log_dir=self.config.get('tensor_board_dir', 'events')))
+        if self.config.get('checkpoint_enable'):
+            cbs.append(callbacks.ModelCheckpoint(
+                checkpoint_dir=self.config.get('checkpoint_dir', 'checkpoints'),
+                checkpoint_name=self.config.get('checkpoint_name', 'model'),
+                checkpoint_restore=self.config.get('checkpoint_restore', True),
+                checkpoint_save_freq=self.config.get('checkpoint_save_freq', 2),
+                checkpoint_save_best_only=self.config.get('checkpoint_save_best_only', False)))
         return cbs
     
     def optimizer(self):

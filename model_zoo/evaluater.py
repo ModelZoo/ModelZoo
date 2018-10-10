@@ -1,5 +1,5 @@
 import tensorflow as tf
-from model_zoo.utils import load_config, get_shape, load_model
+from model_zoo.utils import load_config, load_model, find_model
 
 tfe = tf.contrib.eager
 tf.enable_eager_execution()
@@ -17,7 +17,6 @@ class BaseEvaluater(object):
         """
         you need to define model_class in your Inferer
         """
-        self.model_class = None
         self.flags = tf.flags.FLAGS
     
     def prepare_data(self):
@@ -36,8 +35,13 @@ class BaseEvaluater(object):
         self.eval_data = self.prepare_data()
         # split data
         x_eval, y_eval = self.eval_data
+        # init configs from checkpoints json file and flags
+        config = load_config(self.flags)
+        # init model class
+        model_class_name, model_file = config['model_class'], config['model_file']
+        self.model_class = find_model(model_class_name, model_file)
         # init model
-        model = self.model_class(load_config(self.flags))
+        model = self.model_class(config)
         model.init()
         # init variables
         model.set_inputs(x_eval)
