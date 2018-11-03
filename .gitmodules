@@ -7,3 +7,6 @@
 [submodule "models/emotion_recognition"]
 	path = models/emotion_recognition
 	url = https://github.com/ModelZoo/EmotionRecognition.git
+[submodule "model/face_scoring"]
+	path = model/face_scoring
+	url = https://github.com/ModelZoo/FaceScoring.git
