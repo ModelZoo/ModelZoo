@@ -24,6 +24,8 @@ class BaseModel(tf.keras.Model):
         self.config = config
         self.batch_size = config['batch_size']
         self.epochs = config['epochs']
+        self.steps_per_epoch = config['steps_per_epoch']
+        self.validation_steps = config['validation_steps']
     
     def set_inputs(self, inputs):
         """
@@ -62,6 +64,7 @@ class BaseModel(tf.keras.Model):
         self.output_names = [
             'output_%d' % (i + 1) for i in range(len(dummy_output_values))]
         self.built = True
+        self.init()
     
     def call(self, inputs, training=None, mask=None):
         """
@@ -80,21 +83,54 @@ class BaseModel(tf.keras.Model):
         """
         self.compile(optimizer=self.optimizer(), loss='mse')
     
-    def train(self, train_data, eval_data=None):
+    def train(self, train_data, eval_data=None, use_generator=False, **kwargs):
         """
         train and fit model
         :param train_data: x, y data pairs for training
         :param eval_data: x, y data pairs for evaluating
         :return: fit result
         """
-        x, y = train_data
+        print('Training...')
+        if not use_generator:
+            x, y = train_data
+            self.set_inputs(x)
+            return self.fit(x=x,
+                            y=y,
+                            epochs=self.epochs,
+                            batch_size=self.batch_size,
+                            validation_data=eval_data,
+                            callbacks=self.callbacks())
+        # use generator
+        x, y = next(train_data)
         self.set_inputs(x)
-        return self.fit(x=x,
-                        y=y,
-                        epochs=self.epochs,
-                        batch_size=self.batch_size,
-                        validation_data=eval_data,
-                        callbacks=self.callbacks())
+        
+        # get train size, eval size
+        train_size = kwargs.get('train_size', 0)
+        eval_size = kwargs.get('eval_size', 0)
+        
+        # calculate steps_per_epoch
+        steps_per_epoch = self.steps_per_epoch
+        if not steps_per_epoch and train_size:
+            steps_per_epoch = int(train_size / self.batch_size + 1)
+        if not steps_per_epoch:
+            raise Exception('You must specify `steps_per_epoch` argument if `train_size` is not set')
+        
+        # calculate validation steps
+        validation_steps = self.validation_steps
+        if not validation_steps and eval_size:
+            validation_steps = int(eval_size / self.batch_size + 1)
+        if not validation_steps:
+            validation_steps = 1
+        
+        # fit generator
+        return self.fit_generator(train_data,
+                                  steps_per_epoch=steps_per_epoch,
+                                  epochs=self.epochs,
+        
+                                  validation_data=eval_data,
+                                  validation_steps=validation_steps,
+                                  callbacks=self.callbacks()
+                                  )
     
     def infer(self, test_data, batch_size=None):
         """

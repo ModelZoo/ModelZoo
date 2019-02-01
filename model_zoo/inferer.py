@@ -40,7 +40,6 @@ class BaseInferer():
         self.model_class = find_model(model_class_name, model_file)
         # init model
         model = self.model_class(config)
-        model.init()
         # init variables
         model.set_inputs(self.test_data)
         # restore model if exists

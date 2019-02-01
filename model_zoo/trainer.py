@@ -1,4 +1,5 @@
 import tensorflow as tf
+import types
 from model_zoo.utils import find_model
 
 tfe = tf.contrib.eager
@@ -8,6 +9,8 @@ tf.enable_eager_execution()
 tf.flags.DEFINE_integer('batch_size', 32, help='Batch size', allow_override=True)
 tf.flags.DEFINE_float('learning_rate', 0.01, help='Learning rate', allow_override=True)
 tf.flags.DEFINE_integer('epochs', 100, help='Max epochs', allow_override=True)
+tf.flags.DEFINE_integer('validation_steps', 1, help='Validation steps', allow_override=True)
+tf.flags.DEFINE_integer('steps_per_epoch', 0, help='Steps per epoch while using generator', allow_override=True)
 
 # ========== Early Stop Configs ================
 tf.flags.DEFINE_bool('early_stop_enable', True, help='Whether to enable early stop', allow_override=True)
@@ -51,13 +54,44 @@ class BaseTrainer(object):
         """
         raise NotImplementedError
     
+    def build_generator(self, x_data, y_data, batch_size=None):
+        """
+        use this method to build a generator
+        :param x_data:
+        :param y_data:
+        :param batch_size:
+        :return:
+        """
+        batch_size = batch_size or self.flags.batch_size
+        batches = int(len(x_data) / batch_size + 1)
+        while True:
+            for i in range(batches):
+                yield x_data[i * batch_size: (i + 1) * batch_size], \
+                      y_data[i * batch_size: (i + 1) * batch_size]
+    
     def run(self):
         """
         this methods firstly init model class using flag values, then call model's train method to fit training data
         :return:
         """
         # prepare data
-        self.train_data, self.eval_data = self.prepare_data()
+        data = self.prepare_data()
+        # unpack data
+        self.train_data, self.eval_data, self.train_size, self.eval_size = None, None, 0, 0
+        if not isinstance(data, tuple):
+            data = data,
+        if len(data) == 1:
+            self.train_data = data[0]
+        elif len(data) == 2:
+            self.train_data, self.eval_data = data
+        elif len(data) == 3:
+            self.train_data, self.eval_data, self.train_size = data
+        elif len(data) == 4:
+            self.train_data, self.eval_data, self.train_size, self.eval_size = data
+        # build model and run
         model = self.model_class(self.flags.flag_values_dict())
-        model.init()
-        model.train(self.train_data, self.eval_data)
+        if isinstance(self.train_data, types.GeneratorType):
+            model.train(self.train_data, self.eval_data, use_generator=True,
+                        train_size=self.train_size, eval_size=self.eval_size)
+        else:
+            model.train(self.train_data, self.eval_data)
