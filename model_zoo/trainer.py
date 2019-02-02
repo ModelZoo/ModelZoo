@@ -29,9 +29,10 @@ tf.flags.DEFINE_bool('tensor_board_enable', True, help='Whether to enable Tensor
 tf.flags.DEFINE_string('tensor_board_dir', 'events', help='TensorBoard events dir', allow_override=True)
 
 # ========== Other Basic Configs ==================
-tf.flags.DEFINE_string('model_file', 'model', help='path of model file which including model class',
+tf.flags.DEFINE_string('model_file', 'model', help='Path of model file which including model class',
                        allow_override=True)
-
+tf.flags.DEFINE_string('model_class', 'Model', help='Model class name, default to Model',
+                       allow_override=True)
 
 class BaseTrainer(object):
     """
