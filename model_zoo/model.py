@@ -5,6 +5,7 @@ from tensorflow.python.keras.engine import training_utils
 from tensorflow.python.keras.engine import base_layer
 from tensorflow.python.framework import ops
 from tensorflow.python.keras import backend as K
+import math
 
 tfe = tf.contrib.eager
 
@@ -111,14 +112,14 @@ class BaseModel(tf.keras.Model):
         # calculate steps_per_epoch
         steps_per_epoch = self.steps_per_epoch
         if not steps_per_epoch and train_size:
-            steps_per_epoch = int(train_size / self.batch_size + 1)
+            steps_per_epoch = math.ceil(train_size / self.batch_size)
         if not steps_per_epoch:
             raise Exception('You must specify `steps_per_epoch` argument if `train_size` is not set')
         
         # calculate validation steps
         validation_steps = self.validation_steps
         if not validation_steps and eval_size:
-            validation_steps = int(eval_size / self.batch_size + 1)
+            validation_steps = math.ceil(eval_size / self.batch_size)
         if not validation_steps:
             validation_steps = 1
         
@@ -126,7 +127,6 @@ class BaseModel(tf.keras.Model):
         return self.fit_generator(train_data,
                                   steps_per_epoch=steps_per_epoch,
                                   epochs=self.epochs,
-        
                                   validation_data=eval_data,
                                   validation_steps=validation_steps,
                                   callbacks=self.callbacks()

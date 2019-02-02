@@ -1,6 +1,7 @@
 import tensorflow as tf
 import types
 from model_zoo.utils import find_model
+import math
 
 tfe = tf.contrib.eager
 tf.enable_eager_execution()
@@ -63,9 +64,9 @@ class BaseTrainer(object):
         :return:
         """
         batch_size = batch_size or self.flags.batch_size
-        batches = int(len(x_data) / batch_size + 1)
+        batches = math.ceil(len(x_data) / batch_size)
         while True:
-            for i in range(batches):
+            for i in range(int(batches)):
                 yield x_data[i * batch_size: (i + 1) * batch_size], \
                       y_data[i * batch_size: (i + 1) * batch_size]
     
