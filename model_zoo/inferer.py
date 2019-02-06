@@ -41,7 +41,7 @@ class BaseInferer():
         # init model
         model = self.model_class(config)
         # init variables
-        model.set_inputs(self.test_data)
+        model.construct(self.test_data)
         # restore model if exists
         load_model(model, self.flags.checkpoint_dir, self.flags.checkpoint_name)
         # infer

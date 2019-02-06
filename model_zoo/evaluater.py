@@ -43,7 +43,7 @@ class BaseEvaluater(object):
         # init model
         model = self.model_class(config)
         # init variables
-        model.set_inputs(x_eval)
+        model.construct(x_eval)
         # restore model
         load_model(model, self.flags.checkpoint_dir, self.flags.checkpoint_name)
         # evaluate

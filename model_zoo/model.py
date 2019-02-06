@@ -1,13 +1,18 @@
 import tensorflow as tf
 import model_zoo.callbacks as callbacks
-from tensorflow.python.framework import tensor_util
-from tensorflow.python.keras.engine import training_utils
-from tensorflow.python.keras.engine import base_layer
+import model_zoo.utils as utils
 from tensorflow.python.framework import ops
+from tensorflow.python.framework import tensor_util
 from tensorflow.python.keras import backend as K
+from tensorflow.python.keras.engine import base_layer
+from tensorflow.python.keras.engine import training_utils
 import math
+import numpy as np
 
 tfe = tf.contrib.eager
+
+# override standardize_input_data method
+training_utils.standardize_input_data = utils.standardize_input_data
 
 
 class BaseModel(tf.keras.Model):
@@ -27,43 +32,77 @@ class BaseModel(tf.keras.Model):
         self.epochs = config['epochs']
         self.steps_per_epoch = config['steps_per_epoch']
         self.validation_steps = config['validation_steps']
+        self.shaped = False
     
-    def set_inputs(self, inputs):
+    def shape(self, inputs_shape=None, output_shape=None, dtype=None):
         """
-        set inputs and output shape according to inputs
+        Set inputs and outputs shape, if set construct method will not reset shape
+        :param inputs_shape:
+        :param output_shape:
+        :param dtype:
+        :return:
+        """
+        if not dtype:
+            dtype = tf.float32
+        if inputs_shape:
+            inputs = np.random.rand(*inputs_shape)
+            print('Inputs random', inputs)
+            self.inputs = [
+                base_layer.DeferredTensor(shape=(None for _ in v.shape),
+                                          dtype=dtype) for v in inputs]
+            self.input_names = [
+                'input_%d' % (i + 1) for i in range(len(inputs))]
+        if output_shape:
+            outputs = np.random.rand(*output_shape)
+            self.outputs = [
+                base_layer.DeferredTensor(shape=(None for _ in inputs_shape),
+                                          dtype=v.dtype) for v in outputs]
+            self.output_names = [
+                'output_%d' % (i + 1) for i in range(len(outputs))]
+        self.shaped = True
+    
+    def construct(self, inputs):
+        """
+        Set inputs and output shape according to inputs
         :param inputs: inputs data or data piece
         :return:
         """
-        if isinstance(inputs, (list, tuple)):
-            if tensor_util.is_tensor(inputs[0]):
-                dummy_output_values = self.call(
-                    training_utils.cast_if_floating_dtype(inputs[:1]))
+        if not self.shaped:
+            if isinstance(inputs, (list, tuple)):
+                if tensor_util.is_tensor(inputs[0]):
+                    dummy_output_values = self.call(
+                        training_utils.cast_if_floating_dtype(inputs[:1]))
+                else:
+                    dummy_output_values = self.call(
+                        [ops.convert_to_tensor(v, dtype=K.floatx()) for v in inputs[:1]])
+                # set dummy input values for inputs
+                dummy_input_values = list(inputs[:1])
             else:
-                dummy_output_values = self.call(
-                    [ops.convert_to_tensor(v, dtype=K.floatx()) for v in inputs[:1]])
-            dummy_input_values = list(inputs[:1])
-        else:
-            if tensor_util.is_tensor(inputs):
-                dummy_output_values = self.call(
-                    training_utils.cast_if_floating_dtype(inputs[:1]))
+                if tensor_util.is_tensor(inputs):
+                    dummy_output_values = self.call(
+                        training_utils.cast_if_floating_dtype(inputs[:1]))
+                else:
+                    dummy_output_values = self.call(
+                        ops.convert_to_tensor(inputs[:1], dtype=K.floatx()))
+                # set dummy input values for inputs
+                dummy_input_values = [inputs[:1]]
+            # set output values
+            if isinstance(dummy_output_values, (list, tuple)):
+                dummy_output_values = list(dummy_output_values)
             else:
-                dummy_output_values = self.call(
-                    ops.convert_to_tensor(inputs[:1], dtype=K.floatx()))
-            dummy_input_values = [inputs[:1]]
-        if isinstance(dummy_output_values, (list, tuple)):
-            dummy_output_values = list(dummy_output_values)
-        else:
-            dummy_output_values = [dummy_output_values]
-        self.outputs = [
-            base_layer.DeferredTensor(shape=(None for _ in v.shape),
-                                      dtype=v.dtype) for v in dummy_output_values]
-        self.inputs = [
-            base_layer.DeferredTensor(shape=(None for _ in v.shape),
-                                      dtype=v.dtype) for v in dummy_input_values]
-        self.input_names = [
-            'input_%d' % (i + 1) for i in range(len(dummy_input_values))]
-        self.output_names = [
-            'output_%d' % (i + 1) for i in range(len(dummy_output_values))]
+                dummy_output_values = [dummy_output_values]
+            self.outputs = [
+                base_layer.DeferredTensor(shape=(None for _ in v.shape),
+                                          dtype=v.dtype) for v in dummy_output_values]
+            self.inputs = [
+                base_layer.DeferredTensor(shape=(None for _ in v.shape),
+                                          dtype=v.dtype) for v in dummy_input_values]
+            self.input_names = [
+                'input_%d' % (i + 1) for i in range(len(dummy_input_values))]
+            self.output_names = [
+                'output_%d' % (i + 1) for i in range(len(dummy_output_values))]
+            # print('inputs shape', self.init())
+            self.shaped = True
         self.built = True
         self.init()
     
@@ -76,6 +115,7 @@ class BaseModel(tf.keras.Model):
         :return: y_pred
         """
         return inputs
+    
     
     def init(self):
         """
@@ -93,8 +133,11 @@ class BaseModel(tf.keras.Model):
         """
         print('Training...')
         if not use_generator:
+            # print('Train data', train_data)
+            print('Train data', len(train_data), len(train_data[0]), len(train_data[1]))
+            print(len(train_data[0][0]))
             x, y = train_data
-            self.set_inputs(x)
+            self.construct(x)
             return self.fit(x=x,
                             y=y,
                             epochs=self.epochs,
@@ -103,7 +146,7 @@ class BaseModel(tf.keras.Model):
                             callbacks=self.callbacks())
         # use generator
         x, y = next(train_data)
-        self.set_inputs(x)
+        self.construct(x)
         
         # get train size, eval size
         train_size = kwargs.get('train_size', 0)
@@ -170,3 +213,4 @@ class BaseModel(tf.keras.Model):
         :return:
         """
         return tf.train.GradientDescentOptimizer(self.config.get('learning_rate', 0.01))
+    
