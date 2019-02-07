@@ -49,16 +49,16 @@ class BaseModel(tf.keras.Model):
             print('Inputs random', inputs)
             self.inputs = [
                 base_layer.DeferredTensor(shape=(None for _ in v.shape),
-                                          dtype=dtype) for v in inputs]
+                                          dtype=dtype) for v in [inputs]]
             self.input_names = [
-                'input_%d' % (i + 1) for i in range(len(inputs))]
+                'input_%d' % (i + 1) for i in range(len([inputs]))]
         if output_shape:
             outputs = np.random.rand(*output_shape)
             self.outputs = [
-                base_layer.DeferredTensor(shape=(None for _ in inputs_shape),
-                                          dtype=v.dtype) for v in outputs]
+                base_layer.DeferredTensor(shape=(None for _ in v.shape),
+                                          dtype=v.dtype) for v in [outputs]]
             self.output_names = [
-                'output_%d' % (i + 1) for i in range(len(outputs))]
+                'output_%d' % (i + 1) for i in range(len([outputs]))]
         self.shaped = True
     
     def construct(self, inputs):
