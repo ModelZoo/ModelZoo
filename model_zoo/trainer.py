@@ -12,6 +12,7 @@ tf.flags.DEFINE_float('learning_rate', 0.01, help='Learning rate', allow_overrid
 tf.flags.DEFINE_integer('epochs', 100, help='Max epochs', allow_override=True)
 tf.flags.DEFINE_integer('validation_steps', 1, help='Validation steps', allow_override=True)
 tf.flags.DEFINE_integer('steps_per_epoch', 0, help='Steps per epoch while using generator', allow_override=True)
+tf.flags.DEFINE_bool('multiple_inputs', False, help='If inputs are multiple, set True, otherwise False', allow_override=True)
 
 # ========== Early Stop Configs ================
 tf.flags.DEFINE_bool('early_stop_enable', True, help='Whether to enable early stop', allow_override=True)
