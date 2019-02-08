@@ -8,7 +8,6 @@ from tensorflow.python.keras.engine import base_layer
 from tensorflow.python.keras.engine import training_utils
 import math
 import copy
-import numpy as np
 
 tfe = tf.contrib.eager
 
@@ -118,10 +117,8 @@ class BaseModel(tf.keras.Model):
         :param eval_data: x, y data pairs for evaluating
         :return: fit result
         """
-        print('Training...')
         if not use_generator:
             # print('Train data', train_data)
-            print(len(train_data[0][0]))
             x, y = train_data
             self.construct(x)
             # execute training

@@ -2,7 +2,8 @@ import logging
 import tensorflow as tf
 import json
 import numpy as np
-from os.path import join
+from os.path import join, exists
+from os import makedirs
 from model_zoo.utils import load_model
 
 tfe = tf.contrib.eager
@@ -72,6 +73,8 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
         :param logs:
         :return:
         """
+        if not exists(self.checkpoint_dir):
+            makedirs(self.checkpoint_dir)
         if self.checkpoint_restore:
             load_model(self.model, self.checkpoint_dir, self.checkpoint_name)
     

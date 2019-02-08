@@ -33,6 +33,7 @@ class BaseInferer():
         """
         # get test_data
         self.test_data = self.prepare_data()
+        # print()
         # init configs from checkpoints json file and flags
         config = load_config(self.flags)
         # init model class
