@@ -1,4 +1,3 @@
-import logging
 import tensorflow as tf
 import json
 import numpy as np
@@ -7,12 +6,11 @@ from os import makedirs
 from model_zoo.utils import load_model
 
 
-
 class ModelCheckpoint(tf.keras.callbacks.Callback):
     """
     Save model to checkpoints
     """
-    
+
     def __init__(self,
                  checkpoint_dir,
                  checkpoint_name,
@@ -46,12 +44,12 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
         self.checkpoint_save_best_only = checkpoint_save_best_only
         self.period = period
         self.epochs_since_last_save = 0
-        
+
         if mode not in ['auto', 'min', 'max']:
-            logging.warning('ModelCheckpoint mode %s is unknown, '
-                            'fallback to auto mode.', mode)
+            self.model.logger.warning('ModelCheckpoint mode %s is unknown, '
+                                      'fallback to auto mode.', mode)
             mode = 'auto'
-        
+
         if mode == 'min':
             self.monitor_op = np.less
             self.best = np.Inf
@@ -65,7 +63,7 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
             else:
                 self.monitor_op = np.less
                 self.best = np.Inf
-    
+
     def on_train_begin(self, logs=None):
         """
         restore model from checkpoints
@@ -76,7 +74,7 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
             makedirs(self.checkpoint_dir)
         if self.checkpoint_restore:
             load_model(self.model, self.checkpoint_dir, self.checkpoint_name)
-    
+
     def on_epoch_end(self, epoch, logs=None):
         """
         save model on epoch end
@@ -92,8 +90,8 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
             if self.checkpoint_save_best_only:
                 current = logs.get(self.monitor)
                 if current is None:
-                    logging.warning('\nCan save best model only with %s available, '
-                                    'skipping.', self.monitor)
+                    print('\nCan save best model only with %s available, '
+                          'skipping.', self.monitor)
                 else:
                     if self.monitor_op(current, self.best):
                         if self.verbose > 0:
@@ -101,25 +99,26 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
                                   ' saving model to %s' % (epoch + 1, self.monitor, self.best,
                                                            current, file_path))
                         self.best = current
-                        tf.Saver(self.model.variables).save(file_path)
+                        tf.train.Checkpoint(model=self.model, optimizer=self.model.optimizer).save(file_path)
                         json.dump(dict(self.model.config),
                                   open('%s.json' % file_path, 'w', encoding='utf-8'),
                                   indent=2)
                     else:
                         if self.verbose > 0:
-                            print('\nEpoch %05d: %s did not improve from %0.5f' %
+                            print('Epoch %05d: %s did not improve from %0.5f' %
                                   (epoch + 1, self.monitor, self.best))
             else:
                 if self.verbose > 0:
                     print('\nEpoch %05d: saving model to %s' % (epoch + 1, file_path))
-                tf.Saver(self.model.variables).save(file_path)
+                tf.train.Checkpoint(model=self.model, optimizer=self.model.optimizer).save(file_path)
                 json.dump(dict(self.model.config),
                           open('%s.json' % file_path, 'w', encoding='utf-8'),
                           indent=2)
                 if (epoch + 1) % self.checkpoint_save_freq == 0:
                     if self.verbose > 0:
                         print('Epoch %05d: saving model to %s-%d' % (epoch + 1, file_path, epoch + 1))
-                    tf.Saver(self.model.variables).save(file_path, global_step=epoch + 1)
+                    tf.train.Checkpoint(model=self.model, optimizer=self.model.optimizer) \
+                        .save(file_path)
                     json.dump(dict(self.model.config),
                               open('%s-%d.json' % (file_path, epoch + 1), 'w', encoding='utf-8'),
                               indent=2)

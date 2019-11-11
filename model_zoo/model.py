@@ -1,17 +1,6 @@
 import tensorflow as tf
 import model_zoo.callbacks as callbacks
-import model_zoo.utils as utils
-from tensorflow.python.framework import ops
-from tensorflow.python.framework import tensor_util
-from tensorflow.python.keras import backend as K
-from tensorflow.python.keras.engine import base_layer
-from tensorflow.python.keras.engine import training_utils
 import math
-import copy
-
-
-# override standardize_input_data method
-training_utils.standardize_input_data = utils.standardize_input_data
 
 
 class BaseModel(tf.keras.Model):
@@ -19,7 +8,9 @@ class BaseModel(tf.keras.Model):
     Base Keras Model, you can inherit this Model and
     override '__init__()', 'call()', 'init()', 'callback()' methods
     """
-    
+
+    logger = None
+
     def __init__(self, config):
         """
         init config, batch_size, epochs
@@ -27,71 +18,12 @@ class BaseModel(tf.keras.Model):
         """
         super(BaseModel, self).__init__()
         self.config = config
-        self.batch_size = config['batch_size']
-        self.epochs = config['epochs']
-        self.steps_per_epoch = config['steps_per_epoch']
-        self.validation_steps = config['validation_steps']
-        self.multiple_inputs = config['multiple_inputs']
-    
-    def construct(self, inputs):
-        """
-        Set inputs and output shape according to inputs
-        :param inputs: inputs data or data piece
-        :return:
-        """
-        if not self.multiple_inputs:
-            if isinstance(inputs, (list, tuple)):
-                if tensor_util.is_tensor(inputs[0]):
-                    dummy_output_values = self.call(
-                        training_utils.cast_if_floating_dtype(inputs[:1]))
-                else:
-                    dummy_output_values = self.call(
-                        [ops.convert_to_tensor(v, dtype=K.floatx()) for v in inputs[:1]])
-                # set dummy input values for inputs
-                dummy_input_values = list(inputs[:1])
-            else:
-                if tensor_util.is_tensor(inputs):
-                    dummy_output_values = self.call(
-                        training_utils.cast_if_floating_dtype(inputs[:1]))
-                else:
-                    dummy_output_values = self.call(
-                        ops.convert_to_tensor(inputs[:1], dtype=K.floatx()))
-                # set dummy input values for inputs
-                dummy_input_values = [inputs[:1]]
-            # set output values
-            if isinstance(dummy_output_values, (list, tuple)):
-                dummy_output_values = list(dummy_output_values)
-            else:
-                dummy_output_values = [dummy_output_values]
-        else:
-            first_inputs = copy.copy(inputs)[0]
-            if tensor_util.is_tensor(inputs):
-                inputs = training_utils.cast_if_floating_dtype(inputs)
-            else:
-                inputs = ops.convert_to_tensor(inputs, dtype=K.floatx())
-            inputs = tf.unstack(inputs[:, :1, :], axis=0)
-            dummy_output_values = self.call(inputs, training=True)
-            dummy_input_values = [first_inputs[:1]]
-            # set output values
-            if isinstance(dummy_output_values, (list, tuple)):
-                dummy_output_values = list(dummy_output_values)
-            else:
-                dummy_output_values = [dummy_output_values]
-        self.outputs = [
-            base_layer.DeferredTensor(shape=(None for _ in v.shape),
-                                      dtype=v.dtype) for v in dummy_output_values]
-        self.inputs = [
-            base_layer.DeferredTensor(shape=(None for _ in v.shape),
-                                      dtype=v.dtype) for v in dummy_input_values]
-        self.input_names = [
-            'input_%d' % (i + 1) for i in range(len(dummy_input_values))]
-        self.output_names = [
-            'output_%d' % (i + 1) for i in range(len(dummy_output_values))]
-        
-        # self.call(tensor, training=True)
-        self.built = True
-        self.init()
-    
+        self.batch_size = config.get('batch_size')
+        self.epochs = config.get('epochs')
+        self.steps_per_epoch = config.get('steps_per_epoch')
+        self.validation_steps = config.get('validation_steps')
+        self.distributed = config.get('distributed', False)
+
     def call(self, inputs, training=None, mask=None):
         """
         build your models
@@ -101,14 +33,19 @@ class BaseModel(tf.keras.Model):
         :return: y_pred
         """
         return inputs
-    
+
     def init(self):
         """
         Default call compile method using sgd optimizer and mse loss.
         :return:
         """
-        self.compile(optimizer=self.optimizer(), loss='mse')
-    
+        self.compile(optimizer=self.get_optimizer() or self.config.get('optimizer'),
+                     loss=self.get_loss() or None,
+                     metrics=self.get_metrics() or None,
+                     loss_weights=self.get_loss_weights() or None,
+                     weighted_metrics=self.get_weighted_metrics() or None,
+                     target_tensors=self.get_target_tensors() or None)
+
     def train(self, train_data, eval_data=None, use_generator=False, **kwargs):
         """
         Train and fit model.
@@ -119,7 +56,7 @@ class BaseModel(tf.keras.Model):
         if not use_generator:
             # print('Train data', train_data)
             x, y = train_data
-            self.construct(x)
+            self.init()
             # execute training
             return self.fit(x=x,
                             y=y,
@@ -127,37 +64,39 @@ class BaseModel(tf.keras.Model):
                             batch_size=self.batch_size,
                             validation_data=eval_data,
                             callbacks=self.callbacks())
-        # use generator
-        x, y = next(train_data)
-        self.construct(x)
-        
-        # get train size, eval size
-        train_size = kwargs.get('train_size', 0)
-        eval_size = kwargs.get('eval_size', 0)
-        
-        # calculate steps_per_epoch
-        steps_per_epoch = self.steps_per_epoch
-        if not steps_per_epoch and train_size:
-            steps_per_epoch = math.ceil(train_size / self.batch_size)
-        if not steps_per_epoch:
-            raise Exception('You must specify `steps_per_epoch` argument if `train_size` is not set')
-        
-        # calculate validation steps
-        validation_steps = self.validation_steps
-        if not validation_steps and eval_size:
-            validation_steps = math.ceil(eval_size / self.batch_size)
-        if not validation_steps:
-            validation_steps = 1
-        
-        # fit generator
-        return self.fit_generator(train_data,
-                                  steps_per_epoch=steps_per_epoch,
-                                  epochs=self.epochs,
-                                  validation_data=eval_data,
-                                  validation_steps=validation_steps,
-                                  callbacks=self.callbacks()
-                                  )
-    
+
+        if use_generator:
+            # use generator
+            x, y = next(train_data)
+            self.init(x)
+
+            # get train size, eval size
+            train_size = kwargs.get('train_size', 0)
+            eval_size = kwargs.get('eval_size', 0)
+
+            # calculate steps_per_epoch
+            steps_per_epoch = self.steps_per_epoch
+            if not steps_per_epoch and train_size:
+                steps_per_epoch = math.ceil(train_size / self.batch_size)
+            if not steps_per_epoch:
+                raise Exception('You must specify `steps_per_epoch` argument if `train_size` is not set')
+
+            # calculate validation steps
+            validation_steps = self.validation_steps
+            if not validation_steps and eval_size:
+                validation_steps = math.ceil(eval_size / self.batch_size)
+            if not validation_steps:
+                validation_steps = 1
+
+            # fit generator
+            return self.fit_generator(train_data,
+                                      steps_per_epoch=steps_per_epoch,
+                                      epochs=self.epochs,
+                                      validation_data=eval_data,
+                                      validation_steps=validation_steps,
+                                      callbacks=self.callbacks()
+                                      )
+
     def infer(self, test_data, batch_size=None):
         """
         do inference, default call predict method
@@ -169,7 +108,7 @@ class BaseModel(tf.keras.Model):
         if not batch_size:
             batch_size = self.batch_size
         return self.predict(x, batch_size)
-    
+
     def callbacks(self):
         """
         default callbacks, including logger, early stop, tensor board, checkpoint
@@ -178,7 +117,7 @@ class BaseModel(tf.keras.Model):
         cbs = []
         cbs.append(tf.keras.callbacks.BaseLogger())
         if self.config.get('early_stop_enable'):
-            cbs.append(tf.keras.callbacks.EarlyStopping(patience=self.config.get('early_stop_patience', 50)))
+            cbs.append(tf.keras.callbacks.EarlyStopping(patience=self.config.get('early_stop_patience')))
         if self.config.get('tensor_board_enable'):
             cbs.append(tf.keras.callbacks.TensorBoard(log_dir=self.config.get('tensor_board_dir', 'events')))
         if self.config.get('checkpoint_enable'):
@@ -189,10 +128,59 @@ class BaseModel(tf.keras.Model):
                 checkpoint_save_freq=self.config.get('checkpoint_save_freq', 2),
                 checkpoint_save_best_only=self.config.get('checkpoint_save_best_only', False)))
         return cbs
-    
-    def optimizer(self):
+
+    def get_optimizer(self):
         """
-        build optimizer, default to sgd and lr 0.01
+        Build optimizer, default to sgd.
         :return:
         """
-        return tf.train.GradientDescentOptimizer(self.config.get('learning_rate', 0.01))
+        return 'sgd'
+
+    def get_loss(self):
+        """
+        Build loss function, default to `mse`.
+        :return:
+        """
+        return 'mse'
+
+    def get_metrics(self):
+        """
+        Build metrics
+        :return:
+        """
+        return []
+
+    def get_loss_weights(self):
+        """
+        Optional list or dictionary specifying scalar coefficients (Python floats) to weight the loss contributions
+        of different model outputs. The loss value that will be minimized by the model will then be the weighted sum
+        of all individual losses, weighted by the loss_weights coefficients. If a list, it is expected to have a 1:1
+        mapping to the model's outputs. If a tensor, it is expected to map output names (strings) to scalar coefficients.
+        :return:
+        """
+        return None
+
+    def get_weighted_metrics(self):
+        """
+        List of metrics to be evaluated and weighted by sample_weight or class_weight during training and testing.
+        :return:
+        """
+        return None
+
+    def get_target_tensors(self):
+        """
+        By default, Keras will create placeholders for the model's target, which will be fed with the target data
+        during training. If instead you would like to use your own target tensors (in turn, Keras will not expect
+        external Numpy data for these targets at training time), you can specify them via the target_tensors argument.
+        It can be a single tensor (for a single-output model), a list of tensors, or a dict mapping output names
+        to target tensors.
+        :return:
+        """
+        return None
+
+    def __str__(self):
+        """
+        To string.
+        :return:
+        """
+        return type(self).__name__

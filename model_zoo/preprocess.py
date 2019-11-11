@@ -3,7 +3,7 @@ from sklearn.preprocessing import StandardScaler
 
 def standardize(fit_data, extra_data=None):
     """
-    standardize data
+    Standardize data
     :param fit_data: data to fit and transform
     :param extra_data: extra data to transform
     :return:
