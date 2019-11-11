@@ -1,11 +1,9 @@
 import tensorflow as tf
 from model_zoo.utils import load_config, load_model, find_model
+from absl import flags
 
-tfe = tf.contrib.eager
-tf.enable_eager_execution()
-
-tf.flags.DEFINE_string('checkpoint_dir', 'checkpoints', help='Data source dir', allow_override=True)
-tf.flags.DEFINE_string('checkpoint_name', 'model.ckpt', help='Model name', allow_override=True)
+flags.DEFINE_string('checkpoint_dir', 'checkpoints', help='Data source dir', allow_override=True)
+flags.DEFINE_string('checkpoint_name', 'model.ckpt', help='Model name', allow_override=True)
 
 
 class BaseEvaluater(object):
@@ -17,7 +15,7 @@ class BaseEvaluater(object):
         """
         you need to define model_class in your Inferer
         """
-        self.flags = tf.flags.FLAGS
+        self.flags = flags.FLAGS
     
     def prepare_data(self):
         """

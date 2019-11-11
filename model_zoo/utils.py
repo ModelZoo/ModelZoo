@@ -7,7 +7,6 @@ from importlib import import_module
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.keras.engine.training_utils import standardize_single_array
 
-tfe = tf.contrib.eager
 
 
 def load_config(FLAGS):

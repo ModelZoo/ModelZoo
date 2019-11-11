@@ -9,7 +9,6 @@ from tensorflow.python.keras.engine import training_utils
 import math
 import copy
 
-tfe = tf.contrib.eager
 
 # override standardize_input_data method
 training_utils.standardize_input_data = utils.standardize_input_data

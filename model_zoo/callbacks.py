@@ -6,7 +6,6 @@ from os.path import join, exists
 from os import makedirs
 from model_zoo.utils import load_model
 
-tfe = tf.contrib.eager
 
 
 class ModelCheckpoint(tf.keras.callbacks.Callback):
@@ -102,7 +101,7 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
                                   ' saving model to %s' % (epoch + 1, self.monitor, self.best,
                                                            current, file_path))
                         self.best = current
-                        tfe.Saver(self.model.variables).save(file_path)
+                        tf.Saver(self.model.variables).save(file_path)
                         json.dump(dict(self.model.config),
                                   open('%s.json' % file_path, 'w', encoding='utf-8'),
                                   indent=2)
@@ -113,14 +112,14 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
             else:
                 if self.verbose > 0:
                     print('\nEpoch %05d: saving model to %s' % (epoch + 1, file_path))
-                tfe.Saver(self.model.variables).save(file_path)
+                tf.Saver(self.model.variables).save(file_path)
                 json.dump(dict(self.model.config),
                           open('%s.json' % file_path, 'w', encoding='utf-8'),
                           indent=2)
                 if (epoch + 1) % self.checkpoint_save_freq == 0:
                     if self.verbose > 0:
                         print('Epoch %05d: saving model to %s-%d' % (epoch + 1, file_path, epoch + 1))
-                    tfe.Saver(self.model.variables).save(file_path, global_step=epoch + 1)
+                    tf.Saver(self.model.variables).save(file_path, global_step=epoch + 1)
                     json.dump(dict(self.model.config),
                               open('%s-%d.json' % (file_path, epoch + 1), 'w', encoding='utf-8'),
                               indent=2)

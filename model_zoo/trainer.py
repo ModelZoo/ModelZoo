@@ -2,37 +2,35 @@ import tensorflow as tf
 import types
 from model_zoo.utils import find_model
 import math
-
-tfe = tf.contrib.eager
-tf.enable_eager_execution()
+from absl import flags
 
 # ========== Base Configs =================
-tf.flags.DEFINE_integer('batch_size', 32, help='Batch size', allow_override=True)
-tf.flags.DEFINE_float('learning_rate', 0.01, help='Learning rate', allow_override=True)
-tf.flags.DEFINE_integer('epochs', 100, help='Max epochs', allow_override=True)
-tf.flags.DEFINE_integer('validation_steps', 1, help='Validation steps', allow_override=True)
-tf.flags.DEFINE_integer('steps_per_epoch', 0, help='Steps per epoch while using generator', allow_override=True)
-tf.flags.DEFINE_bool('multiple_inputs', False, help='If inputs are multiple, set True, otherwise False', allow_override=True)
+flags.DEFINE_integer('batch_size', 32, help='Batch size', allow_override=True)
+flags.DEFINE_float('learning_rate', 0.01, help='Learning rate', allow_override=True)
+flags.DEFINE_integer('epochs', 100, help='Max epochs', allow_override=True)
+flags.DEFINE_integer('validation_steps', 1, help='Validation steps', allow_override=True)
+flags.DEFINE_integer('steps_per_epoch', 0, help='Steps per epoch while using generator', allow_override=True)
+flags.DEFINE_bool('multiple_inputs', False, help='If inputs are multiple, set True, otherwise False', allow_override=True)
 
 # ========== Early Stop Configs ================
-tf.flags.DEFINE_bool('early_stop_enable', True, help='Whether to enable early stop', allow_override=True)
-tf.flags.DEFINE_integer('early_stop_patience', 20, help='Early stop patience', allow_override=True)
+flags.DEFINE_bool('early_stop_enable', True, help='Whether to enable early stop', allow_override=True)
+flags.DEFINE_integer('early_stop_patience', 20, help='Early stop patience', allow_override=True)
 
 # ========== Checkpoint Configs =================
-tf.flags.DEFINE_bool('checkpoint_enable', True, help='Whether to save model checkpoint', allow_override=True)
-tf.flags.DEFINE_string('checkpoint_dir', 'checkpoints', help='Data source dir', allow_override=True)
-tf.flags.DEFINE_string('checkpoint_name', 'model.ckpt', help='Model name', allow_override=True)
-tf.flags.DEFINE_bool('checkpoint_restore', False, help='Model restore', allow_override=True)
-tf.flags.DEFINE_integer('checkpoint_save_freq', 2, help='Save model every epoch number', allow_override=True)
+flags.DEFINE_bool('checkpoint_enable', True, help='Whether to save model checkpoint', allow_override=True)
+flags.DEFINE_string('checkpoint_dir', 'checkpoints', help='Data source dir', allow_override=True)
+flags.DEFINE_string('checkpoint_name', 'model.ckpt', help='Model name', allow_override=True)
+flags.DEFINE_bool('checkpoint_restore', False, help='Model restore', allow_override=True)
+flags.DEFINE_integer('checkpoint_save_freq', 2, help='Save model every epoch number', allow_override=True)
 
 # ========== TensorBoard Events Configs =================
-tf.flags.DEFINE_bool('tensor_board_enable', True, help='Whether to enable TensorBoard events', allow_override=True)
-tf.flags.DEFINE_string('tensor_board_dir', 'events', help='TensorBoard events dir', allow_override=True)
+flags.DEFINE_bool('tensor_board_enable', True, help='Whether to enable TensorBoard events', allow_override=True)
+flags.DEFINE_string('tensor_board_dir', 'events', help='TensorBoard events dir', allow_override=True)
 
 # ========== Other Basic Configs ==================
-tf.flags.DEFINE_string('model_file', 'model', help='Path of model file which including model class',
+flags.DEFINE_string('model_file', 'model', help='Path of model file which including model class',
                        allow_override=True)
-tf.flags.DEFINE_string('model_class', 'Model', help='Model class name, default to Model',
+flags.DEFINE_string('model_class', 'Model', help='Model class name, default to Model',
                        allow_override=True)
 
 class BaseTrainer(object):
@@ -45,7 +43,7 @@ class BaseTrainer(object):
         """
         you need to define model_class in your Trainer
         """
-        self.flags = tf.flags.FLAGS
+        self.flags = flags.FLAGS
         # init model class
         model_class_name = self.flags.model_class
         self.model_class = find_model(model_class_name, self.flags.model_file)
