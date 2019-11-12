@@ -26,7 +26,7 @@ DESCRIPTION = 'A framework to help you build model much more easily.'
 URL = 'https://github.com/ModelZoo/ModelZoo'
 EMAIL = 'cqc@cuiqingcai.com'
 AUTHOR = 'Germey'
-REQUIRES_PYTHON = '>=3.4.0'
+REQUIRES_PYTHON = '>=3.5.0'
 VERSION = None
 
 REQUIRED = read_requirements('requirements.txt')

@@ -13,7 +13,7 @@ pyparsing>=2.2.2
 python-dateutil==2.7.3
 scipy>=1.1.0
 six>=1.11.0
-sklearn>=0.21.3
+sklearn
 tensorflow>=2.0.0
 tensorflow-gpu>=2.0.0
 termcolor>=1.1.0

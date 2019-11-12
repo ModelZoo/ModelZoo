@@ -16,44 +16,43 @@ Let's implement a linear-regression model quickly.
 
 Here we use boston_housing dataset as example.
 
-Define a linear model like this, named `model.py`:
+Define a linear model in models folder, named `model.py` and import its Class from `__init__.py`:
 
 ```python
 from model_zoo.model import BaseModel
 import tensorflow as tf
 
-class BostonHousingModel(BaseModel):
+class HousePricePredictionModel(BaseModel):
     def __init__(self, config):
-        super(BostonHousingModel, self).__init__(config)
+        super(HousePricePredictionModel, self).__init__(config)
         self.dense = tf.keras.layers.Dense(1)
 
     def call(self, inputs, training=None, mask=None):
         o = self.dense(inputs)
         return o
-
 ```
 
 Then define a trainer like this, named `train.py`:
 
 ```python
-import tensorflow as tf
 from model_zoo.trainer import BaseTrainer
 from model_zoo.preprocess import standardize
+from model_zoo import flags, datasets
 
-tf.flags.DEFINE_integer('epochs', 20, 'Max epochs')
-tf.flags.DEFINE_string('model_class', 'BostonHousingModel', 'Model class name')
+flags.DEFINE_integer('epochs', 100, 'Max epochs')
+flags.DEFINE_string('model_class_name', 'HousePricePredictionModel', 'Model class name')
 
 class Trainer(BaseTrainer):
 
     def prepare_data(self):
-        from tensorflow.python.keras.datasets import boston_housing
-        (x_train, y_train), (x_eval, y_eval) = boston_housing.load_data()
+        (x_train, y_train), (x_eval, y_eval) = datasets.boston_housing.load_data()
         x_train, x_eval = standardize(x_train, x_eval)
         train_data, eval_data = (x_train, y_train), (x_eval, y_eval)
         return train_data, eval_data
 
 if __name__ == '__main__':
     Trainer().run()
+
 ```
 
 Now, we've finished this model!
@@ -74,7 +73,7 @@ Epoch 1/100
 Epoch 2/100
  1/13 [=>............................] - ETA: 0s - loss: 361.5632
 13/13 [==============================] - 0s 3ms/step - loss: 274.7090 - val_loss: 206.7015
-Epoch 00002: saving model to checkpoints/model.ckpt
+Epoch 00002: saving model to checkpoints/model-2.ckpt
 
 Epoch 3/100
  1/13 [=>............................] - ETA: 0s - loss: 163.5308
@@ -83,7 +82,7 @@ Epoch 3/100
 Epoch 4/100
  1/13 [=>............................] - ETA: 0s - loss: 115.4743
 13/13 [==============================] - 0s 3ms/step - loss: 112.6434 - val_loss: 85.0848
-Epoch 00004: saving model to checkpoints/model.ckpt
+Epoch 00004: saving model to checkpoints/model-4.ckpt
 
 Epoch 5/100
  1/13 [=>............................] - ETA: 0s - loss: 149.8252
@@ -93,7 +92,7 @@ Epoch 5/100
 Epoch 42/100
  7/13 [===============>..............] - ETA: 0s - loss: 20.5911
 13/13 [==============================] - 0s 8ms/step - loss: 22.4666 - val_loss: 23.7161
-Epoch 00042: saving model to checkpoints/model.ckpt
+Epoch 00042: saving model to checkpoints/model-42.ckpt
 ```
 
 It runs only 42 epochs and stopped early, because the framework auto enabled early stop mechanism and there are no more good evaluation results for 20 epochs.
@@ -109,9 +108,9 @@ tensorboard --logdir=.
 
 TensorBoard like this:
 
-![](https://ws4.sinaimg.cn/large/006tNbRwgy1fvxrcajse2j31kw0hkgnf.jpg)
+![](https://qiniu.cuiqingcai.com/2019-11-12-190237.png)
 
-There are training batch loss, epoch loss, eval loss.
+There are training and validation loss in the graph.
 
 And also we can find checkpoints in `checkpoints` dir.
 
@@ -122,15 +121,14 @@ Next we can predict using existing checkpoints, define `infer.py` like this:
 ```python
 from model_zoo.inferer import BaseInferer
 from model_zoo.preprocess import standardize
-import tensorflow as tf
+from model_zoo import flags, datasets
 
-tf.flags.DEFINE_string('checkpoint_name', 'model.ckpt-20', help='Model name')
+flags.DEFINE_string('checkpoint_name', 'model-best.ckpt', help='Model name')
 
 class Inferer(BaseInferer):
 
     def prepare_data(self):
-        from tensorflow.python.keras.datasets import boston_housing
-        (x_train, y_train), (x_test, y_test) = boston_housing.load_data()
+        (x_train, y_train), (x_test, y_test) = datasets.boston_housing.load_data()
         _, x_test = standardize(x_train, x_test)
         return x_test
 
@@ -159,13 +157,8 @@ Now we've restored the specified model `model.ckpt-38` and prepared test data, o
  [24.821484 ]]
 ```
 
-OK, we've finished restoring and predicting. Just so quickly.
+OK, we've finished restoring and predicting. Just so convenient. [Here](https://github.com/ModelZoo/PricePrediction) is the code.
 
-## Implemented Models
+# More
 
-Just see [models](./models), welcome to contribute your model to us.
-
-## License
-
-MIT
-
+If you want to find more models, just see [ModelZoo](https://github.com/ModelZoo).
