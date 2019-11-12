@@ -1,7 +1,9 @@
+from pathlib import Path
+
 import tensorflow as tf
 import json
 import numpy as np
-from os.path import join, exists
+from os.path import join, exists, dirname
 from os import makedirs
 from model_zoo.utils import load_model
 
@@ -18,7 +20,10 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
                  checkpoint_save_freq=2,
                  monitor='val_loss',
                  verbose=1,
-                 checkpoint_save_best_only=False,
+                 checkpoint_save_best=True,
+                 checkpoint_save_every=True,
+                 checkpoint_save_latest=True,
+                 checkpoint_save_weights_only=True,
                  mode='auto',
                  period=1):
         """
@@ -41,7 +46,10 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
         self.file_path = join(checkpoint_dir, checkpoint_name)
         self.checkpoint_restore = checkpoint_restore
         self.checkpoint_save_freq = checkpoint_save_freq
-        self.checkpoint_save_best_only = checkpoint_save_best_only
+        self.checkpoint_save_best = checkpoint_save_best
+        self.checkpoint_save_every = checkpoint_save_every
+        self.checkpoint_save_latest = checkpoint_save_latest
+        self.checkpoint_save_weights_only = checkpoint_save_weights_only
         self.period = period
         self.epochs_since_last_save = 0
 
@@ -49,7 +57,6 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
             self.model.logger.warning('ModelCheckpoint mode %s is unknown, '
                                       'fallback to auto mode.', mode)
             mode = 'auto'
-
         if mode == 'min':
             self.monitor_op = np.less
             self.best = np.Inf
@@ -86,39 +93,74 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
         self.epochs_since_last_save += 1
         if self.epochs_since_last_save >= self.period:
             self.epochs_since_last_save = 0
-            file_path = self.file_path.format(epoch=epoch + 1, **logs)
-            if self.checkpoint_save_best_only:
-                current = logs.get(self.monitor)
+            file_dir = dirname(self.file_path)
+            # ensure file dir exists
+            if not exists(file_dir): makedirs(file_dir)
+            # get val loss
+            val_loss = logs.get(self.monitor)
+            path = Path(self.file_path)
+
+            print('path', path.suffix)
+
+            # save best model
+            if self.checkpoint_save_best:
+                file_stem = '%s-best' % path.stem
+                current = val_loss
                 if current is None:
                     print('\nCan save best model only with %s available, '
                           'skipping.', self.monitor)
                 else:
                     if self.monitor_op(current, self.best):
                         if self.verbose > 0:
-                            print('\nEpoch %05d: %s improved from %0.5f to %0.5f,'
-                                  ' saving model to %s' % (epoch + 1, self.monitor, self.best,
-                                                           current, file_path))
+                            print('\nEpoch %05d: %s improved from %0.5f to %0.5f, saving best model to %s%s' \
+                                  % (epoch + 1, self.monitor, self.best,
+                                     current, file_stem, path.suffix))
                         self.best = current
-                        tf.train.Checkpoint(model=self.model, optimizer=self.model.optimizer).save(file_path)
-                        json.dump(dict(self.model.config),
-                                  open('%s.json' % file_path, 'w', encoding='utf-8'),
+                        # save weights only
+                        if self.checkpoint_save_weights_only:
+                            self.model.save_weights(join(dirname(self.file_path), '%s%s' % (file_stem, path.suffix)))
+                        # save h5 file
+                        else:
+                            self.model.save(join(dirname(self.file_path), '%s%s' % (file_stem, path.suffix)))
+                        # save config align
+                        json.dump(dict(self.model.config, **{'epoch': epoch, 'val_loss': current}),
+                                  open(join(dirname(self.file_path), '%s.json' % file_stem), 'w', encoding='utf-8'),
                                   indent=2)
                     else:
                         if self.verbose > 0:
-                            print('Epoch %05d: %s did not improve from %0.5f' %
+                            print('\nEpoch %05d: %s did not improve from %0.5f' %
                                   (epoch + 1, self.monitor, self.best))
-            else:
+
+            # save latest model
+            if self.checkpoint_save_latest:
+                file_stem = '%s-latest' % path.stem
                 if self.verbose > 0:
-                    print('\nEpoch %05d: saving model to %s' % (epoch + 1, file_path))
-                tf.train.Checkpoint(model=self.model, optimizer=self.model.optimizer).save(file_path)
-                json.dump(dict(self.model.config),
-                          open('%s.json' % file_path, 'w', encoding='utf-8'),
+                    print('\nEpoch %05d: saving latest model to %s%s' % (epoch + 1, file_stem, path.suffix))
+                # save weights only
+                if self.checkpoint_save_weights_only:
+                    self.model.save_weights(join(dirname(self.file_path), '%s%s' % (file_stem, path.suffix)))
+                # save h5 file
+                else:
+                    self.model.save(join(dirname(self.file_path), '%s%s' % (file_stem, path.suffix)))
+                # save config align
+                json.dump(dict(self.model.config, **{'epoch': epoch, 'val_loss': val_loss}),
+                          open(join(dirname(self.file_path), '%s.json' % file_stem), 'w', encoding='utf-8'),
                           indent=2)
+
+            # save every model per freq
+            if self.checkpoint_save_every:
                 if (epoch + 1) % self.checkpoint_save_freq == 0:
+                    # new file path, such as `checkpoints/model.ckpt-1`
+                    file_stem = '%s-%d' % (path.stem, epoch + 1)
                     if self.verbose > 0:
-                        print('Epoch %05d: saving model to %s-%d' % (epoch + 1, file_path, epoch + 1))
-                    tf.train.Checkpoint(model=self.model, optimizer=self.model.optimizer) \
-                        .save(file_path)
-                    json.dump(dict(self.model.config),
-                              open('%s-%d.json' % (file_path, epoch + 1), 'w', encoding='utf-8'),
+                        print('\nEpoch %05d: saving model to %s%s' % (
+                            epoch + 1, file_stem, path.suffix))
+                    # save weights only
+                    if self.checkpoint_save_weights_only:
+                        self.model.save_weights(join(dirname(self.file_path), '%s%s' % (file_stem, path.suffix)))
+                    # save h5 file
+                    else:
+                        self.model.save(join(dirname(self.file_path), '%s%s' % (file_stem, path.suffix)))
+                    json.dump(dict(self.model.config, **{'epoch': epoch, 'val_loss': val_loss}),
+                              open(join(dirname(self.file_path), '%s.json' % file_stem), 'w', encoding='utf-8'),
                               indent=2)

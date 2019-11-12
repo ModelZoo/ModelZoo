@@ -126,7 +126,10 @@ class BaseModel(tf.keras.Model):
                 checkpoint_name=self.config.get('checkpoint_name', 'model'),
                 checkpoint_restore=self.config.get('checkpoint_restore', True),
                 checkpoint_save_freq=self.config.get('checkpoint_save_freq', 2),
-                checkpoint_save_best_only=self.config.get('checkpoint_save_best_only', False)))
+                checkpoint_save_best=self.config.get('checkpoint_save_best', True),
+                checkpoint_save_latest=self.config.get('checkpoint_save_latest', True),
+                checkpoint_save_every=self.config.get('checkpoint_save_every', True),
+                checkpoint_save_weights_only=self.config.get('checkpoint_save_weights_only', True)))
         return cbs
 
     def get_optimizer(self):

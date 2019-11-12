@@ -1,8 +1,8 @@
 import json
-from os.path import join, exists
+from os.path import join
+from pathlib import Path
 import numpy as np
 import tensorflow as tf
-from os.path import exists
 from importlib import import_module
 
 
@@ -12,8 +12,8 @@ def load_config(config):
     :param FLAGS: FLAGS object
     :return: config dict
     """
-    loaded = json.load(
-        open('%s.json' % join(config.get('checkpoint_dir'), config.get('checkpoint_name')), 'r', encoding='utf-8'))
+    json_path = '%s.json' % join(config.get('checkpoint_dir'), Path(config.get('checkpoint_name')).stem)
+    loaded = json.load(open(json_path, 'r', encoding='utf-8'))
     for key, value in config.items():
         loaded[key] = value
     return loaded
@@ -25,15 +25,14 @@ def load_model(model, checkpoint_dir, checkpoint_name):
     :param model: model graph
     :return:
     """
-    saver = tf.train.Checkpoint(model=model, optimizer=model.optimizer)
     specified_checkpoint = join(checkpoint_dir, checkpoint_name)
-    latest_checkpoint = tf.train.latest_checkpoint(checkpoint_dir)
     if specified_checkpoint:
-        saver.restore(specified_checkpoint)
-        print('Restored from %s' % specified_checkpoint)
-    elif latest_checkpoint:
-        saver.restore(latest_checkpoint)
-        print('Restored from %s' % latest_checkpoint)
+        if '.ckpt' in checkpoint_name:
+            model.load_weights(specified_checkpoint)
+            print('Restored weights from %s' % specified_checkpoint)
+        if '.h5' in checkpoint_name:
+            model.load(specified_checkpoint)
+            print('Restored all model from %s' % specified_checkpoint)
     else:
         print('No model to restore')
 

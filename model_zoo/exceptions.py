@@ -1,0 +1,2 @@
+class DefineException(Exception):
+    pass

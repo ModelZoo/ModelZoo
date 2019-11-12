@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import types
+
+from model_zoo.exceptions import DefineException
 from model_zoo.logger import get_logger
 from model_zoo.utils import find_model
 from model_zoo import flags
@@ -23,6 +25,10 @@ flags.DEFINE_string('checkpoint_dir', 'checkpoints', help='Data source dir', all
 flags.DEFINE_string('checkpoint_name', 'model.ckpt', help='Model name', allow_override=True)
 flags.DEFINE_bool('checkpoint_restore', False, help='Model restore', allow_override=True)
 flags.DEFINE_integer('checkpoint_save_freq', 2, help='Save model every epoch number', allow_override=True)
+flags.DEFINE_bool('checkpoint_save_weights_only', True, help='Save weights of model only', allow_override=True)
+flags.DEFINE_bool('checkpoint_save_best', True, help='Save best model', allow_override=True)
+flags.DEFINE_bool('checkpoint_save_every', True, help='Save every model', allow_override=True)
+flags.DEFINE_bool('checkpoint_save_latest', True, help='Save latest model', allow_override=True)
 
 # ========== Log System ================
 flags.DEFINE_bool('log_enable', True, help='Whether to enable Log System', allow_override=True)
@@ -61,11 +67,23 @@ class BaseTrainer(object):
         # get logger
         logger = get_logger(self.config)
         self.logger = logger
+        self.logger.debug(f'training config {self.config}')
 
         # init model class
         model_class_name, model_file_name = self.config.get('model_class_name'), self.config.get('model_file_name')
         self.model_class = find_model(model_class_name, model_file_name)
         self.logger.debug(f'model class {self.model_class} found')
+
+        checkpoint_name = self.config.get('checkpoint_name')
+        checkpoint_save_weights_only = self.config.get('checkpoint_save_weights_only')
+
+        if checkpoint_save_weights_only and not '.ckpt' in checkpoint_name:
+            raise DefineException(
+                'you must specify `.ckpt` in your checkpoint name while `checkpoint_save_weights_only` is True')
+
+        if not checkpoint_save_weights_only and not '.h5' in checkpoint_name:
+            raise DefineException(
+                'you must specify `.h5` in your checkpoint name while `checkpoint_save_weights_only` is False')
 
     def prepare_data(self):
         """
@@ -110,10 +128,8 @@ class BaseTrainer(object):
             self.train_data, self.eval_data, self.train_size, self.eval_size = data
 
         # build model and run
-        self.logger.info(f'initialize model class {self.model_class}')
         model = self.model_class(self.config)
         model.logger = self.logger
-        self.logger.info(f'initialize model logger {model.logger} of {model}')
 
         # fit for generator
         if isinstance(self.train_data, types.GeneratorType):
