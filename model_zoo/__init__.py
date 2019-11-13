@@ -1,6 +1,6 @@
 from os.path import abspath, dirname
-from absl import flags
 from tensorflow_core.python.keras import datasets
+from . import flags
 
 version_file = dirname(abspath(__file__)) + '/VERSION'
 

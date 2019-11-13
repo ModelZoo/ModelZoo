@@ -67,8 +67,7 @@ class BaseModel(tf.keras.Model):
 
         if use_generator:
             # use generator
-            x, y = next(train_data)
-            self.init(x)
+            self.init()
 
             # get train size, eval size
             train_size = kwargs.get('train_size', 0)

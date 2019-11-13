@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import types
-
 from model_zoo.exceptions import DefineException
 from model_zoo.logger import get_logger
 from model_zoo.utils import find_model

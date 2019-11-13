@@ -14,7 +14,7 @@ flags.DEFINE_string('log_retention', None, help='Log file retention', allow_over
 flags.DEFINE_string('log_format', '{time} - {level} - {module} - {file} - {message}', help='Log record format',
                     allow_override=True)
 flags.DEFINE_string('log_folder', './logs/', help='Folder of log file', allow_override=True)
-flags.DEFINE_string('log_file', 'train.log', help='Name of log file', allow_override=True)
+flags.DEFINE_string('log_file', 'evaluate.log', help='Name of log file', allow_override=True)
 flags.DEFINE_string('log_path', '', help='File path of log file', allow_override=True)
 
 

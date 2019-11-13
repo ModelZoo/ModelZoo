@@ -2,8 +2,20 @@ from model_zoo.logger import get_logger
 from model_zoo.utils import load_config, load_model, find_model
 from model_zoo import flags
 
+# ========== Checkpoint ================
 flags.DEFINE_string('checkpoint_dir', 'checkpoints', help='Data source dir', allow_override=True)
 flags.DEFINE_string('checkpoint_name', 'model.ckpt', help='Model name', allow_override=True)
+
+# ========== Log System ================
+flags.DEFINE_bool('log_enable', True, help='Whether to enable Log System', allow_override=True)
+flags.DEFINE_string('log_level', 'DEBUG', help='Log Level', allow_override=True)
+flags.DEFINE_string('log_rotation', '100MB', help='Log file rotation', allow_override=True)
+flags.DEFINE_string('log_retention', None, help='Log file retention', allow_override=True)
+flags.DEFINE_string('log_format', '{time} - {level} - {module} - {file} - {message}', help='Log record format',
+                    allow_override=True)
+flags.DEFINE_string('log_folder', './logs/', help='Folder of log file', allow_override=True)
+flags.DEFINE_string('log_file', 'infer.log', help='Name of log file', allow_override=True)
+flags.DEFINE_string('log_path', '', help='File path of log file', allow_override=True)
 
 
 class BaseInferer():
