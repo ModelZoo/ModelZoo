@@ -1,6 +1,6 @@
 # ModelZoo
 
-A Scaffold to help you build Deep-learning Model much more easily, implemented with TensorFlow Eager Execution and Keras.
+A Scaffold to help you build Deep-learning Model much more easily, implemented with TensorFlow 2.0.
 
 ## Installation
 
