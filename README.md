@@ -1,6 +1,6 @@
 # ModelZoo
 
-A Scaffold to help you build Deep-learning Model much more easily, implemented with TensorFlow Eager Execution and Keras.
+A Scaffold to help you build Deep-learning Model much more easily, implemented with TensorFlow 2.0.
 
 ## Installation
 
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     print(result)
 ```
 
-Now we've restored the specified model `model.ckpt-38` and prepared test data, outputs like this:
+Now we've restored the specified model `model-best.ckpt` and prepared test data, outputs like this:
 
 ```python
 [[ 9.637125 ]
