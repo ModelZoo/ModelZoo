@@ -24,7 +24,7 @@ class BaseModel(tf.keras.Model):
         self.validation_steps = config.get('validation_steps')
         self.distributed = config.get('distributed', False)
 
-    def call(self, inputs, training=None, mask=None):
+    def call(self, inputs, training=False, mask=None):
         """
         build your models
         :param inputs: inputs x
