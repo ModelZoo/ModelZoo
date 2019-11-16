@@ -114,7 +114,7 @@ class BaseTrainer(object):
         :return:
         """
         # build model and run
-        model = self.model_class(self.config)
+        model = self.model_class(config=self.config)
         model.logger = self.logger
         
         # prepare data

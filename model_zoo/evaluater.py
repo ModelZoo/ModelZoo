@@ -56,7 +56,7 @@ class BaseEvaluater(object):
         self.model_class = find_model_class(model_class_name, model_file_name)
         
         # init model
-        model = self.model_class(config)
+        model = self.model_class(config=config)
         model.logger = self.logger
         self.logger.info(f'initialize model logger {model.logger} of {model}')
         

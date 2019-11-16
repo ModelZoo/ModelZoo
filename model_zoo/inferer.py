@@ -54,7 +54,7 @@ class BaseInferer():
         model_class_name, model_file_name = config.get('model_class_name'), config.get('model_file_name')
         self.model_class = find_model_class(model_class_name, model_file_name)
         # init model
-        model = self.model_class(config)
+        model = self.model_class(config=config)
         # restore model if exists
         load_model(model, self.config.get('checkpoint_dir'), self.config.get('checkpoint_name'))
         # infer
