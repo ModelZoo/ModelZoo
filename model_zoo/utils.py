@@ -29,7 +29,6 @@ def load_model(framework, checkpoint_dir, checkpoint_name):
     """
     if not isinstance(framework, model_zoo.Framework):
         raise model_zoo.exceptions.LoadException('You must specify a instance of subclass of `model_zoo.Model` to load')
-    print('framework', framework, framework.model)
     specified_checkpoint = join(checkpoint_dir, checkpoint_name)
     if specified_checkpoint:
         if '.ckpt' in checkpoint_name:

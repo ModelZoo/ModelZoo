@@ -22,32 +22,31 @@ class BaseInferer():
     """
     Base Inferer, you need to specify
     """
-
+    
     def __init__(self):
         """
         you need to define model_class in your Inferer
         """
         self.config = flags.FLAGS.flag_values_dict()
-
+        
         # get logger
         logger = get_logger(self.config)
         self.logger = logger
-
+    
     def data(self):
         """
         you need to implement this method
         :return:
         """
         raise NotImplementedError
-
-    def run(self):
+    
+    def run(self, **kwargs):
         """
         start inferring
         :return:
         """
         # get test_data
         self.test_data = self.data()
-        # print()
         # init configs from checkpoints json file and flags
         config = load_config(self.config)
         # init model class
@@ -58,4 +57,4 @@ class BaseInferer():
         # restore model if exists
         load_model(model, self.config.get('checkpoint_dir'), self.config.get('checkpoint_name'))
         # infer
-        return model.infer(self.test_data)
+        return model.infer(self.test_data, **kwargs)

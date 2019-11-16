@@ -40,7 +40,7 @@ class BaseEvaluater(object):
         """
         raise NotImplementedError
     
-    def run(self):
+    def run(self, **kwargs):
         """
         start inferring
         :return:
@@ -63,4 +63,4 @@ class BaseEvaluater(object):
         # restore model
         load_model(model, self.config.get('checkpoint_dir'), self.config.get('checkpoint_name'))
         # evaluate
-        return model.evaluate(x_eval, y_eval)
+        return model.evaluate(x_eval, y_eval, **kwargs)

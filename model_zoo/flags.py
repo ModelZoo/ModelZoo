@@ -470,7 +470,7 @@ define_multi_enum = DEFINE_multi_enum
 define_multi_enum_class = DEFINE_multi_enum_class
 
 
-def define(name, value):
+def define(name, value, help=None):
     """
     Simplify define function.
     :param name:
@@ -478,17 +478,17 @@ def define(name, value):
     :return:
     """
     if isinstance(value, (list, tuple)):
-        define_list(name, value)
+        define_list(name, value, help)
         return
     if isinstance(value, str):
-        define_string(name, value)
+        define_string(name, value, help)
         return
     if isinstance(value, bool):
-        define_bool(name, value)
+        define_bool(name, value, help)
         return
     if isinstance(value, float):
-        define_float(name, value)
+        define_float(name, value, help)
         return
     if isinstance(value, int):
-        define_integer(name, value)
+        define_integer(name, value, help)
         return

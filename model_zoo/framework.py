@@ -67,7 +67,6 @@ class Framework(object):
         :param eval_data: x, y data pairs for evaluating
         :return: fit result
         """
-        print('x', x)
         # fit for generator
         if isinstance(x, types.GeneratorType):
             # get train size, eval size
@@ -122,7 +121,7 @@ class Framework(object):
                                   callbacks=self.callbacks(),
                                   **kwargs)
     
-    def infer(self, x, batch_size, **kwargs):
+    def infer(self, x, batch_size=None, **kwargs):
         """
         Do inference, default call predict method.
         :param test_data: x data
@@ -133,7 +132,7 @@ class Framework(object):
             batch_size = self.batch_size
         return self.model.predict(x, batch_size, **kwargs)
     
-    def evaluate(self, x, y, batch_size, **kwargs):
+    def evaluate(self, x, y, batch_size=None, **kwargs):
         """
         Do evaluate, default call evaluate method.
         :param x:
@@ -144,7 +143,7 @@ class Framework(object):
         """
         if not batch_size:
             batch_size = self.batch_size
-        return self.model.predict(x, y, batch_size, **kwargs)
+        return self.model.evaluate(x, y, batch_size, **kwargs)
     
     def callbacks(self):
         """

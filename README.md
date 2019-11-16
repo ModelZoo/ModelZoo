@@ -19,40 +19,37 @@ Here we use boston_housing dataset as example.
 Define a linear model in models folder, named `model.py` and import its Class from `__init__.py`:
 
 ```python
-from model_zoo.model import BaseModel
+from model_zoo import Model
 import tensorflow as tf
 
-class HousePricePredictionModel(BaseModel):
-    def __init__(self, config):
-        super(HousePricePredictionModel, self).__init__(config)
-        self.dense = tf.keras.layers.Dense(1)
-
-    def call(self, inputs, training=None, mask=None):
-        o = self.dense(inputs)
-        return o
+class HousePricePredictionModel(Model):
+    
+    def inputs(self):
+        return tf.keras.Input(shape=(13))
+    
+    def outputs(self, inputs):
+        return tf.keras.layers.Dense(1)(inputs)
 ```
 
 Then define a trainer like this, named `train.py`:
 
 ```python
+from model_zoo import flags, datasets, preprocess
 from model_zoo.trainer import BaseTrainer
-from model_zoo.preprocess import standardize
-from model_zoo import flags, datasets
 
-flags.DEFINE_integer('epochs', 100, 'Max epochs')
-flags.DEFINE_string('model_class_name', 'HousePricePredictionModel', 'Model class name')
+flags.define('epochs', 100)
+flags.define('model_class_name', 'HousePricePredictionModel')
+flags.define('checkpoint_name', 'model.ckpt')
 
 class Trainer(BaseTrainer):
-
-    def prepare_data(self):
+    def data(self):
         (x_train, y_train), (x_eval, y_eval) = datasets.boston_housing.load_data()
-        x_train, x_eval = standardize(x_train, x_eval)
+        x_train, x_eval = preprocess.standardize(x_train, x_eval)
         train_data, eval_data = (x_train, y_train), (x_eval, y_eval)
         return train_data, eval_data
 
 if __name__ == '__main__':
     Trainer().run()
-
 ```
 
 Now, we've finished this model!
@@ -119,17 +116,15 @@ It saved the best model named `model.ckpt` according to eval score, and it also 
 Next we can predict using existing checkpoints, define `infer.py` like this:
 
 ```python
+from model_zoo import flags, datasets, preprocess
 from model_zoo.inferer import BaseInferer
-from model_zoo.preprocess import standardize
-from model_zoo import flags, datasets
 
-flags.DEFINE_string('checkpoint_name', 'model-best.ckpt', help='Model name')
+flags.define('checkpoint_name', 'model-best.ckpt')
 
 class Inferer(BaseInferer):
-
-    def prepare_data(self):
+    def data(self):
         (x_train, y_train), (x_test, y_test) = datasets.boston_housing.load_data()
-        _, x_test = standardize(x_train, x_test)
+        _, x_test = preprocess.standardize(x_train, x_test)
         return x_test
 
 if __name__ == '__main__':
