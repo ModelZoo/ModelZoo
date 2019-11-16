@@ -1,5 +1,5 @@
 from model_zoo.logger import get_logger
-from model_zoo.utils import load_config, load_model, find_model
+from model_zoo.utils import load_config, load_model, find_model_class
 from absl import flags
 
 # ========== Checkpoint ================
@@ -22,46 +22,44 @@ class BaseEvaluater(object):
     """
     Base Evaluater, you need to specify
     """
-
+    
     def __init__(self):
         """
         you need to define model_class in your Inferer
         """
         self.config = flags.FLAGS.flag_values_dict()
-
+        
         # get logger
         logger = get_logger(self.config)
         self.logger = logger
-
-    def prepare_data(self):
+    
+    def data(self):
         """
         you need to implement this method
         :return:
         """
         raise NotImplementedError
-
+    
     def run(self):
         """
         start inferring
         :return:
         """
         # prepare data
-        self.eval_data = self.prepare_data()
+        self.eval_data = self.data()
         # split data
         x_eval, y_eval = self.eval_data
         # init configs from checkpoints json file and flags
         config = load_config(self.config)
         # init model class
         model_class_name, model_file_name = config.get('model_class_name'), config.get('model_file_name')
-        self.model_class = find_model(model_class_name, model_file_name)
-
+        self.model_class = find_model_class(model_class_name, model_file_name)
+        
         # init model
         model = self.model_class(config)
         model.logger = self.logger
         self.logger.info(f'initialize model logger {model.logger} of {model}')
-
-        # init variables
-        model.init()
+        
         # restore model
         load_model(model, self.config.get('checkpoint_dir'), self.config.get('checkpoint_name'))
         # evaluate

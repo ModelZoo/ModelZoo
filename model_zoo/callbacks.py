@@ -10,10 +10,11 @@ from model_zoo.utils import load_model
 
 class ModelCheckpoint(tf.keras.callbacks.Callback):
     """
-    Save model to checkpoints
+    Save model to checkpoints.
     """
 
     def __init__(self,
+                 checkpoint_config,
                  checkpoint_dir,
                  checkpoint_name,
                  checkpoint_restore=True,
@@ -28,6 +29,7 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
                  period=1):
         """
         init checkpoint callback
+        :param checkpoint_config:
         :param checkpoint_dir:
         :param checkpoint_name:
         :param checkpoint_restore:
@@ -41,6 +43,7 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
         super(ModelCheckpoint, self).__init__()
         self.monitor = monitor
         self.verbose = verbose
+        self.checkpoint_config = checkpoint_config
         self.checkpoint_dir = checkpoint_dir
         self.checkpoint_name = checkpoint_name
         self.file_path = join(checkpoint_dir, checkpoint_name)
@@ -123,7 +126,7 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
                         else:
                             self.model.save(join(dirname(self.file_path), '%s%s' % (file_stem, path.suffix)))
                         # save config align
-                        json.dump(dict(self.model.config, **{'epoch': epoch, 'val_loss': current}),
+                        json.dump(dict(self.checkpoint_config, **{'epoch': epoch, 'val_loss': current}),
                                   open(join(dirname(self.file_path), '%s.json' % file_stem), 'w', encoding='utf-8'),
                                   indent=2)
                     else:
@@ -143,7 +146,7 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
                 else:
                     self.model.save(join(dirname(self.file_path), '%s%s' % (file_stem, path.suffix)))
                 # save config align
-                json.dump(dict(self.model.config, **{'epoch': epoch, 'val_loss': val_loss}),
+                json.dump(dict(self.checkpoint_config, **{'epoch': epoch, 'val_loss': val_loss}),
                           open(join(dirname(self.file_path), '%s.json' % file_stem), 'w', encoding='utf-8'),
                           indent=2)
 
@@ -161,6 +164,6 @@ class ModelCheckpoint(tf.keras.callbacks.Callback):
                     # save h5 file
                     else:
                         self.model.save(join(dirname(self.file_path), '%s%s' % (file_stem, path.suffix)))
-                    json.dump(dict(self.model.config, **{'epoch': epoch, 'val_loss': val_loss}),
+                    json.dump(dict(self.checkpoint_config, **{'epoch': epoch, 'val_loss': val_loss}),
                               open(join(dirname(self.file_path), '%s.json' % file_stem), 'w', encoding='utf-8'),
                               indent=2)

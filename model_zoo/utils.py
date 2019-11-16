@@ -1,14 +1,16 @@
 import json
-from os.path import join
+from os.path import join, exists
 from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from importlib import import_module
+from tensorflow import keras
+import model_zoo
 
 
 def load_config(config):
     """
-    log configs
+    Load config from checkpoint dir and combine current config to it.
     :param FLAGS: FLAGS object
     :return: config dict
     """
@@ -19,25 +21,30 @@ def load_config(config):
     return loaded
 
 
-def load_model(model, checkpoint_dir, checkpoint_name):
+def load_model(framework, checkpoint_dir, checkpoint_name):
     """
     restore model from saved checkpoints
     :param model: model graph
     :return:
     """
+    if not isinstance(framework, model_zoo.Framework):
+        raise model_zoo.exceptions.LoadException('You must specify a instance of subclass of `model_zoo.Model` to load')
+    print('framework', framework, framework.model)
     specified_checkpoint = join(checkpoint_dir, checkpoint_name)
     if specified_checkpoint:
         if '.ckpt' in checkpoint_name:
-            model.load_weights(specified_checkpoint)
+            framework.model.load_weights(specified_checkpoint)
             print('Restored weights from %s' % specified_checkpoint)
         if '.h5' in checkpoint_name:
-            model.load(specified_checkpoint)
+            if not exists(specified_checkpoint):
+                raise FileNotFoundError(f'{specified_checkpoint} not found')
+            framework.model = keras.models.load_model(specified_checkpoint)
             print('Restored all model from %s' % specified_checkpoint)
     else:
         print('No model to restore')
 
 
-def find_model(model_class_name, model_file_name):
+def find_model_class(model_class_name, model_file_name):
     """
     dynamic find model from model file according to model class name
     :param name: name of model class

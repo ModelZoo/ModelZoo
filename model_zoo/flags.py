@@ -320,7 +320,8 @@ def DEFINE_multi_integer(name, default, help=None, lower_bound=None, upper_bound
     DEFINE_multi(parser, serializer, name, default, help, flag_values, **args)
 
 
-def DEFINE_multi_float(name, default, help=None, lower_bound=None, upper_bound=None, flag_values=_flagvalues.FLAGS, **args):
+def DEFINE_multi_float(name, default, help=None, lower_bound=None, upper_bound=None, flag_values=_flagvalues.FLAGS,
+                       **args):
     """Registers a flag whose value can be a list of arbitrary floats.
 
     Use the flag on the command line multiple times to place multiple
@@ -345,7 +346,8 @@ def DEFINE_multi_float(name, default, help=None, lower_bound=None, upper_bound=N
     DEFINE_multi(parser, serializer, name, default, help, flag_values, **args)
 
 
-def DEFINE_multi_enum(name, default, enum_values, help=None, flag_values=_flagvalues.FLAGS, case_sensitive=True, **args):
+def DEFINE_multi_enum(name, default, enum_values, help=None, flag_values=_flagvalues.FLAGS, case_sensitive=True,
+                      **args):
     """Registers a flag whose value can be a list strings from enum_values.
 
     Use the flag on the command line multiple times to place multiple
@@ -371,7 +373,8 @@ def DEFINE_multi_enum(name, default, enum_values, help=None, flag_values=_flagva
     DEFINE_multi(parser, serializer, name, default, help, flag_values, **args)
 
 
-def DEFINE_multi_enum_class(name, default, enum_class, help=None, flag_values=_flagvalues.FLAGS, module_name=None, **args):
+def DEFINE_multi_enum_class(name, default, enum_class, help=None, flag_values=_flagvalues.FLAGS, module_name=None,
+                            **args):
     """Registers a flag whose value can be a list of enum members.
 
     Use the flag on the command line multiple times to place multiple
@@ -417,25 +420,25 @@ def DEFINE_alias(name, original_name, flag_values=_flagvalues.FLAGS, module_name
     if original_name not in flag_values:
         raise _exceptions.UnrecognizedFlagError(original_name)
     flag = flag_values[original_name]
-
+    
     class _Parser(_argument_parser.ArgumentParser):
         """The parser for the alias flag calls the original flag parser."""
-
+        
         def parse(self, argument):
             flag.parse(argument)
             return flag.value
-
+    
     class _FlagAlias(_flag.Flag):
         """Overrides Flag class so alias value is copy of original flag value."""
-
+        
         @property
         def value(self):
             return flag.value
-
+        
         @value.setter
         def value(self, value):
             flag.value = value
-
+    
     help_msg = 'Alias for --%s.' % flag.name
     # If alias_name has been used, flags.DuplicatedFlag will be raised.
     DEFINE_flag(_FlagAlias(_Parser(), flag.serializer, name, flag.default,
@@ -447,3 +450,45 @@ DEFINE_bool = DEFINE_boolean  # Match C++ API.
 
 # The global FlagValues instance.
 FLAGS = _flagvalues.FLAGS
+
+define_bool = DEFINE_bool
+define_boolean = define_bool
+define_string = DEFINE_string
+define_flag = DEFINE_flag
+define_float = DEFINE_float
+define_integer = DEFINE_integer
+define_number = DEFINE_float
+define_enum = DEFINE_enum
+define_enum_class = DEFINE_enum_class
+define_list = DEFINE_list
+define_spaceseplist = DEFINE_spaceseplist
+define_multi = DEFINE_multi
+define_multi_string = DEFINE_multi_string
+define_multi_integer = DEFINE_multi_integer
+define_multi_float = DEFINE_multi_float
+define_multi_enum = DEFINE_multi_enum
+define_multi_enum_class = DEFINE_multi_enum_class
+
+
+def define(name, value):
+    """
+    Simplify define function.
+    :param name:
+    :param value:
+    :return:
+    """
+    if isinstance(value, (list, tuple)):
+        define_list(name, value)
+        return
+    if isinstance(value, str):
+        define_string(name, value)
+        return
+    if isinstance(value, bool):
+        define_bool(name, value)
+        return
+    if isinstance(value, float):
+        define_float(name, value)
+        return
+    if isinstance(value, int):
+        define_integer(name, value)
+        return
