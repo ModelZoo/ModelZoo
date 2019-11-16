@@ -1,0 +1,1 @@
+from .house import HousePricePredictionModel
